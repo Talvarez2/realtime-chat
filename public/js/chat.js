@@ -15,6 +15,11 @@ ws.onopen = () => ws.send(JSON.stringify({ type: 'join', username, room: current
 ws.onmessage = (e) => {
   const msg = JSON.parse(e.data);
 
+  if (msg.type === 'history') {
+    msg.messages.forEach(m => addMessage(m, m.content));
+    return;
+  }
+
   if (msg.type === 'joined') {
     currentRoom = msg.room;
     currentRoomEl.textContent = '#' + msg.room;

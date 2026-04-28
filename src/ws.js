@@ -1,6 +1,7 @@
 const { WebSocketServer } = require('ws');
+const { saveMessage, getMessages } = require('./db');
 
-const rooms = new Map(); // room -> Set<ws>
+const rooms = new Map();
 
 function getRoom(name) {
   if (!rooms.has(name)) rooms.set(name, new Set());
@@ -21,18 +22,14 @@ function sendTo(ws, data) {
 function broadcastRoomUsers(room) {
   const users = [...getRoom(room)].map(c => c.username).filter(Boolean);
   const data = { type: 'users', room, users };
-  for (const client of getRoom(room)) {
-    if (client.readyState === 1) client.send(JSON.stringify(data));
-  }
+  for (const client of getRoom(room)) sendTo(client, data);
 }
 
 function broadcastRoomList() {
   const roomList = [...rooms.keys()];
-  const data = JSON.stringify({ type: 'rooms', rooms: roomList });
+  const data = { type: 'rooms', rooms: roomList };
   for (const [, clients] of rooms) {
-    for (const client of clients) {
-      if (client.readyState === 1) client.send(data);
-    }
+    for (const client of clients) sendTo(client, data);
   }
 }
 
@@ -52,10 +49,16 @@ function joinRoom(ws, room) {
   leaveRoom(ws);
   ws.room = room;
   getRoom(room).add(ws);
+
+  sendTo(ws, { type: 'joined', room });
+
+  // Send message history after joined (client clears on joined)
+  const history = getMessages(room);
+  sendTo(ws, { type: 'history', room, messages: history });
+
   broadcast(room, { type: 'system', content: `${ws.username} joined the room`, room }, ws);
   broadcastRoomUsers(room);
   broadcastRoomList();
-  sendTo(ws, { type: 'joined', room });
 }
 
 function setupWebSocket(server) {
@@ -78,10 +81,10 @@ function setupWebSocket(server) {
           if (room) joinRoom(ws, room);
           return;
         }
-        const payload = { type: 'message', username: ws.username, content, room: ws.room, timestamp: Date.now() };
-        for (const client of getRoom(ws.room)) {
-          if (client.readyState === 1) sendTo(client, payload);
-        }
+        const timestamp = Date.now();
+        saveMessage(ws.room, ws.username, content, timestamp);
+        const payload = { type: 'message', username: ws.username, content, room: ws.room, timestamp };
+        for (const client of getRoom(ws.room)) sendTo(client, payload);
       }
     });
 
