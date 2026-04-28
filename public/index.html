@@ -8,11 +8,23 @@
 </head>
 <body>
   <div id="app">
-    <div id="messages"></div>
-    <form id="form">
-      <input id="input" type="text" placeholder="Type a message..." autocomplete="off">
-      <button type="submit">Send</button>
-    </form>
+    <aside id="sidebar">
+      <div id="room-header">
+        <h3>Rooms</h3>
+        <input id="new-room" type="text" placeholder="Join room...">
+      </div>
+      <ul id="room-list"></ul>
+      <div id="user-header"><h3>Users</h3></div>
+      <ul id="user-list"></ul>
+    </aside>
+    <main id="chat">
+      <div id="chat-header"><span id="current-room">#general</span></div>
+      <div id="messages"></div>
+      <form id="form">
+        <input id="input" type="text" placeholder="Type a message... (/join #room)" autocomplete="off">
+        <button type="submit">Send</button>
+      </form>
+    </main>
   </div>
   <script src="/js/chat.js"></script>
 </body>
