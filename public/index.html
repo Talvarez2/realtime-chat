@@ -11,7 +11,7 @@
     <aside id="sidebar">
       <div id="room-header">
         <h3>Rooms</h3>
-        <input id="new-room" type="text" placeholder="Join room...">
+        <input id="new-room" type="text" placeholder="Join room..." aria-label="Join room">
       </div>
       <ul id="room-list"></ul>
       <div id="user-header"><h3>Users</h3></div>
@@ -19,13 +19,17 @@
     </aside>
     <main id="chat">
       <div id="chat-header"><span id="current-room">#general</span></div>
-      <div id="messages"></div>
+      <div id="messages" role="log" aria-live="polite"></div>
+      <div id="typing" aria-live="polite"></div>
       <form id="form">
-        <input id="input" type="text" placeholder="Type a message... (/join #room)" autocomplete="off">
+        <button type="button" id="emoji-btn" aria-label="Emoji picker">😊</button>
+        <div id="emoji-picker" hidden></div>
+        <input id="input" type="text" placeholder="Type a message... (/join #room)" autocomplete="off" aria-label="Message input">
         <button type="submit">Send</button>
       </form>
     </main>
   </div>
   <script src="/js/chat.js"></script>
+  <script src="/js/emoji.js"></script>
 </body>
 </html>

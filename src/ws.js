@@ -8,21 +8,19 @@ function getRoom(name) {
   return rooms.get(name);
 }
 
-function broadcast(room, data, exclude) {
-  const payload = JSON.stringify(data);
-  for (const client of getRoom(room)) {
-    if (client !== exclude && client.readyState === 1) client.send(payload);
-  }
-}
-
 function sendTo(ws, data) {
   if (ws.readyState === 1) ws.send(JSON.stringify(data));
 }
 
+function broadcast(room, data, exclude) {
+  for (const client of getRoom(room)) {
+    if (client !== exclude) sendTo(client, data);
+  }
+}
+
 function broadcastRoomUsers(room) {
   const users = [...getRoom(room)].map(c => c.username).filter(Boolean);
-  const data = { type: 'users', room, users };
-  for (const client of getRoom(room)) sendTo(client, data);
+  for (const client of getRoom(room)) sendTo(client, { type: 'users', room, users });
 }
 
 function broadcastRoomList() {
@@ -52,7 +50,6 @@ function joinRoom(ws, room) {
 
   sendTo(ws, { type: 'joined', room });
 
-  // Send message history after joined (client clears on joined)
   const history = getMessages(room);
   sendTo(ws, { type: 'history', room, messages: history });
 
@@ -71,6 +68,11 @@ function setupWebSocket(server) {
       if (msg.type === 'join') {
         ws.username = msg.username;
         joinRoom(ws, msg.room || 'general');
+        return;
+      }
+
+      if (msg.type === 'typing' && ws.room) {
+        broadcast(ws.room, { type: 'typing', username: ws.username, room: ws.room }, ws);
         return;
       }
 
